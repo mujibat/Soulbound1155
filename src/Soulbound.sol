@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "../lib/solmate/src/tokens/ERC1155.sol";
 
 contract GameItems is ERC1155 {
     uint256 public constant MAIN_TOKEN_ID = 1;
     mapping(address => bool) private _ownsMainToken;
+    mapping(address => mapping(uint256 => uint256)) private _balances;
+    mapping(address => mapping(address => bool)) private _operatorApprovals;
 
     modifier onlyMainTokenOwner() {
         require(_ownsMainToken[msg.sender], "Caller does not own the soulbound main token");
         _;
     }
 
-    constructor(address[] memory initialOwners) ERC1155("https://example.com/api/token/{id}.json") {
+    constructor(address[] memory initialOwners) ERC1155() {
         require(initialOwners.length >= 2, "At least two initial owners are required");
 
         for (uint256 i = 0; i < initialOwners.length; i++) {
@@ -33,7 +34,7 @@ contract GameItems is ERC1155 {
         }
     }
 
-    function transferItemTokens(address from, address to, uint256 id, uint256 amount, bytes memory data)
+    function transferItemTokens(address from, address to, uint256 id, uint256 amount, bytes calldata data)
         external
         onlyMainTokenOwner
     {
@@ -41,14 +42,5 @@ contract GameItems is ERC1155 {
         safeTransferFrom(from, to, id, amount, data);
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) public override {
-        require(id != MAIN_TOKEN_ID, "Main token transfer not allowed");
-        super.safeTransferFrom(from, to, id, amount, data);
-    }
+    
 }
